@@ -146,5 +146,40 @@ gak diubah).
   - private key RSA gede (4096-bit PEM) berisiko gagal disimpan di device
   tertentu; ED25519 jauh lebih pendek kalau ketemu masalah ini.
 
+## Bikin Build APK Lebih Ringan (2026-07-29)
+
+Karena kuota build EAS-nya terbatas, ini optimasi biar APK preview
+(`npm run build:apk`) jauh lebih kecil - tanpa nambah risiko, semua opsi di
+bawah udah dipakai luas & didokumentasikan resmi sama Expo.
+
+### Added
+- Dependency baru: `expo-build-properties` `~1.0.10` (versi yang cocok buat
+  Expo SDK 54, dicek dulu biar gak beda versi pas `npx expo install --check`).
+- `app.json` plugin `expo-build-properties`:
+  - `enableProguardInReleaseBuilds` + `enableShrinkResourcesInReleaseBuilds`:
+    kode & resource yang gak kepakai dibuang/di-obfuscate pas build release.
+  - `useLegacyPackaging: true`: buat build APK internal (bukan lewat Play
+    Store) - native library dikompres lagi di dalam APK, biasanya beberapa
+    MB lebih kecil dibanding default SDK 54 (yang defaultnya nyimpen native
+    lib gak terkompres demi startup time, gak relevan buat APK sideload).
+- `eas.json` profile `preview` (yang kamu pakai buat `npm run build:apk`):
+  env `ORG_GRADLE_PROJECT_reactNativeArchitectures: "arm64-v8a"` - ini yang
+  PALING KERASA. Default React Native build APK "universal" isinya native
+  library buat 4 arsitektur CPU sekaligus (arm64-v8a, armeabi-v7a, x86,
+  x86_64) padahal HP kamu cuma butuh SATU (hampir semua HP Android modern
+  arm64-v8a). Restrict ke 1 arsitektur ini biasanya motong APK jadi
+  seperempatnya buat bagian native library.
+
+### Catatan
+- `expo-build-properties` juga punya opsi `android.buildArchs` yang
+  KELIATANNYA buat hal yang sama - sengaja TIDAK dipakai karena ada laporan
+  resmi di GitHub Expo (issue #38225) opsi itu gak konsisten kepake pas EAS
+  build. Env var `ORG_GRADLE_PROJECT_reactNativeArchitectures` di eas.json
+  adalah cara yang didokumentasikan Expo sendiri sebagai yang beneran jalan
+  buat build di server EAS.
+- Kalau nanti kamu perlu APK buat HP 32-bit lama, ganti value env di atas
+  jadi `"arm64-v8a,armeabi-v7a"` (comma-separated, tanpa spasi).
+
+
 
 
