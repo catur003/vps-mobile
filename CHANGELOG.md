@@ -180,6 +180,21 @@ bawah udah dipakai luas & didokumentasikan resmi sama Expo.
 - Kalau nanti kamu perlu APK buat HP 32-bit lama, ganti value env di atas
   jadi `"arm64-v8a,armeabi-v7a"` (comma-separated, tanpa spasi).
 
+## Fix Terpisah - `babel-preset-expo` Hilang dari package.json (2026-07-29)
+
+Bug lama, gak ada hubungannya sama Fase 1-3 - baru ketauan pas `npm install`
+bersih dijalanin (kemungkinan sebelumnya "nebeng" hoisted/cache
+`node_modules` lama yang kebetulan masih ada paketnya). `babel.config.js`
+project ini pakai `babel-preset-expo` tapi paketnya gak pernah didaftarin di
+`devDependencies` - begitu `node_modules` di-reset, Metro gak nemu preset-nya
+dan Babel gagal transform `expo-router` (error "Cannot find module
+'babel-preset-expo'").
+
+### Fixed
+- `package.json`: tambah `"babel-preset-expo": "~54.0.0"` ke `devDependencies`
+  (versi yang cocok buat Expo SDK 54 yang project ini pakai).
+
+
 
 
 
