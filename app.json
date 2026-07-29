@@ -1,9 +1,9 @@
 {
   "expo": {
     "name": "ZenVPS",
-    "slug": "zenvps-app",
+    "slug": "zenhub",
     "scheme": "zenvps",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -44,7 +44,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+        "projectId": "e9c165f7-9e6a-4cbc-b3f9-faaa3e594676"
       }
     }
   }
