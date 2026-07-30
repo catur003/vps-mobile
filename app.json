@@ -34,10 +34,11 @@
             "enableShrinkResourcesInReleaseBuilds": true,
             "useLegacyPackaging": true,
             "packagingOptions": {
-              "pickFirsts": [
+              "exclude": [
                 "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
               ]
-            }
+            },
+            "enableMinifyInReleaseBuilds": true
           }
         }
       ]
@@ -46,6 +47,9 @@
       "eas": {
         "projectId": "e9c165f7-9e6a-4cbc-b3f9-faaa3e594676"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.zenhub.zenvps"
     }
   }
 }
