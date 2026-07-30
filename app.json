@@ -34,7 +34,7 @@
             "enableShrinkResourcesInReleaseBuilds": true,
             "useLegacyPackaging": true,
             "packagingOptions": {
-              "pickFirst": [
+              "pickFirsts": [
                 "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
               ]
             }
