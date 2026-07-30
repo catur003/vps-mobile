@@ -73,7 +73,15 @@ export default function JobDetailScreen() {
     );
   }
 
-  const canRetry = job.type === 'deploy_nextjs' && job.status === 'failed' && Boolean(job.stoppedAtKey);
+  // FIX: sebelumnya cuma job.type === 'deploy_nextjs' (attempt pertama) yang
+  // dianggap bisa di-retry, jadi begitu sebuah RETRY gagal lagi (tipe job-nya
+  // jadi 'deploy_nextjs_retry'), tombol retry hilang total dari halaman itu -
+  // padahal backend sekarang (lihat deploy.routes.js) sudah bisa nerima retry
+  // dari job hasil retry juga.
+  const canRetry =
+    (job.type === 'deploy_nextjs' || job.type === 'deploy_nextjs_retry') &&
+    job.status === 'failed' &&
+    Boolean(job.stoppedAtKey);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -104,7 +112,7 @@ export default function JobDetailScreen() {
         </View>
       )}
 
-      {job.type === 'deploy_nextjs' && job.status === 'failed' && !job.stoppedAtKey && (
+      {(job.type === 'deploy_nextjs' || job.type === 'deploy_nextjs_retry') && job.status === 'failed' && !job.stoppedAtKey && (
         <Text style={[styles.muted, { marginTop: spacing.md }]}>
           Job ini gagal sebelum sempat clone folder — belum ada yang bisa dilanjutkan. Ulangi dari awal lewat "Deploy
           Baru".

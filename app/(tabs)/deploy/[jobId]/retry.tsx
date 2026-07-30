@@ -7,7 +7,7 @@ import { FormField } from '@/components/FormField';
 import { Button } from '@/components/Button';
 import { KeyboardScreen } from '@/components/KeyboardScreen';
 import { colors, spacing } from '@/lib/theme';
-import { getJob, retryDeploy, ApiError, DeployPayload } from '@/lib/api';
+import { getJob, getProjectEnv, retryDeploy, ApiError, DeployPayload } from '@/lib/api';
 
 const PRISMA_MODES: NonNullable<DeployPayload['prismaMode']>[] = ['none', 'generate', 'push', 'migrate'];
 
@@ -17,6 +17,19 @@ export default function RetryDeployScreen() {
   const qc = useQueryClient();
 
   const { data: job, isLoading } = useQuery({ queryKey: ['job', jobId], queryFn: () => getJob(jobId) });
+
+  // job.params.envContent SELALU balik sebagai "[REDACTED]" dari API (lihat
+  // jobStore.js SENSITIVE_KEY_PATTERN - sengaja disamarkan biar secret di
+  // .env gak numpang lewat lewat response job) - jadi gak bisa dipakai buat
+  // nunjukin isi .env yang SEKARANG beneran ke user. Diambil terpisah lewat
+  // endpoint .env project asli (sama kayak layar edit .env biasa), supaya
+  // placeholder di bawah nunjukin isi nyata, bukan literal "[REDACTED]".
+  const projectName = job?.params?.name as string | undefined;
+  const { data: currentEnv } = useQuery({
+    queryKey: ['project-env', projectName],
+    queryFn: () => getProjectEnv(projectName as string),
+    enabled: Boolean(projectName),
+  });
 
   const [envContent, setEnvContent] = useState<string | null>(null);
   const [port, setPort] = useState<string | null>(null);
@@ -61,7 +74,7 @@ export default function RetryDeployScreen() {
       <Card>
         <FormField
           label={`Isi .env (kosongkan = pakai yang lama)`}
-          placeholder={original.envContent || '(kosong)'}
+          placeholder={currentEnv?.content || '(kosong)'}
           multiline
           numberOfLines={5}
           style={{ minHeight: 100, textAlignVertical: 'top' }}
