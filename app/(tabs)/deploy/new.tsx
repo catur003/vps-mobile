@@ -22,12 +22,16 @@ export default function NewDeployScreen() {
   const [deployUser, setDeployUser] = useState('');
   const [envContent, setEnvContent] = useState('');
   const [prismaMode, setPrismaMode] = useState<DeployPayload['prismaMode']>('none');
-  const [githubAccountLabel, setGithubAccountLabel] = useState<string | undefined>(undefined);
 
-  // Dipakai buat repo PRIVATE - kalau kosong, deploy jalan tanpa auth (aman
-  // buat repo publik, tapi bakal gagal di step "Git Clone" kalau repo-nya
-  // ternyata private). Lihat Setting > GitHub buat nambah akun.
+  // Picker akun GitHub sengaja TIDAK ditaruh di form ini (dipindah ke
+  // Setelan > Akun GitHub, biar form deploy tetap simpel). Kalau cuma ada
+  // 1 akun tersimpan, kita pakai otomatis tanpa nanya - itu kasus paling
+  // umum. Kalau ada >1 akun (ambigu, gak tau mau pakai yang mana), kita
+  // TIDAK menebak - biarin gitRepo dikirim tanpa auth, biar gagalnya jelas
+  // di step Git Clone (bukan diam-diam clone pakai akun yang salah).
   const githubAccounts = useQuery({ queryKey: ['github-accounts'], queryFn: listGithubAccounts });
+  const autoGithubAccountLabel =
+    githubAccounts.data?.accounts.length === 1 ? githubAccounts.data.accounts[0].label : undefined;
 
   const mutation = useMutation({
     mutationFn: (payload: DeployPayload) => deployProject(payload),
@@ -53,7 +57,7 @@ export default function NewDeployScreen() {
       deployUser: deployUser.trim() || undefined,
       envContent: envContent || undefined,
       prismaMode,
-      githubAccountLabel,
+      githubAccountLabel: autoGithubAccountLabel,
     });
   }
 
@@ -68,26 +72,6 @@ export default function NewDeployScreen() {
           value={gitRepo}
           onChangeText={setGitRepo}
         />
-        {(githubAccounts.data?.accounts.length ?? 0) > 0 && (
-          <View>
-            <Text style={styles.label}>Akun GitHub (repo private saja)</Text>
-            <View style={styles.modeRow}>
-              <Button
-                label="Tanpa akun (publik)"
-                variant={!githubAccountLabel ? 'primary' : 'secondary'}
-                onPress={() => setGithubAccountLabel(undefined)}
-              />
-              {githubAccounts.data!.accounts.map((acc) => (
-                <Button
-                  key={acc.label}
-                  label={`${acc.label} (${acc.username})`}
-                  variant={githubAccountLabel === acc.label ? 'primary' : 'secondary'}
-                  onPress={() => setGithubAccountLabel(acc.label)}
-                />
-              ))}
-            </View>
-          </View>
-        )}
         <FormField label="Branch (opsional)" placeholder="main" value={branch} onChangeText={setBranch} />
         <FormField label="Domain" placeholder="app.contoh.com" keyboardType="url" value={domain} onChangeText={setDomain} />
         <FormField label="Port" placeholder="3001" keyboardType="number-pad" value={port} onChangeText={setPort} />

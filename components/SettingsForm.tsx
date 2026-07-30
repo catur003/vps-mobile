@@ -213,6 +213,18 @@ export function SettingsForm({ variant = 'modal' }: SettingsFormProps) {
         <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
       </Card>
 
+      <Text style={styles.sectionTitle}>Deploy</Text>
+      <Card onPress={() => router.push('/github-accounts')} style={styles.rowCard}>
+        <View style={[styles.rowIconWrap, { backgroundColor: colors.accentSoft }]}>
+          <Ionicons name="logo-github" size={18} color={colors.accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.rowTitle}>Akun GitHub</Text>
+          <Text style={styles.rowSub}>Kelola akun/token buat deploy repo private</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
+      </Card>
+
       <Text style={[styles.sectionTitle, { color: colors.red }]}>Zona Berbahaya</Text>
       <Card style={styles.dangerCard} onPress={handleReset}>
         <View style={[styles.rowIconWrap, { backgroundColor: colors.redSoft }]}>

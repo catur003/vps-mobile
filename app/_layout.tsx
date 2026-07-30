@@ -112,6 +112,7 @@ export default function RootLayout() {
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="settings" options={{ headerShown: true, title: 'Pengaturan Koneksi', presentation: 'modal' }} />
                   <Stack.Screen name="cleanup" options={{ headerShown: true, title: 'Bersihkan Cache Project', presentation: 'modal' }} />
+                  <Stack.Screen name="github-accounts" options={{ headerShown: true, title: 'Akun GitHub', presentation: 'modal' }} />
                 </Stack>
               </ThemedRoot>
             </AuthGate>
