@@ -470,6 +470,10 @@ export interface DeployPayload {
   deployUser?: string;
   envContent?: string;
   prismaMode?: 'none' | 'generate' | 'push' | 'migrate';
+  // Label akun GitHub tersimpan (dari listGithubAccounts()) - kirim ini kalau
+  // repo-nya PRIVATE, biar backend nyisipin username:token ke cloneUrl.
+  // Tanpa ini, clone repo private selalu gagal ("could not read Username").
+  githubAccountLabel?: string;
 }
 
 export async function deployProject(payload: DeployPayload): Promise<{ jobId: string }> {
