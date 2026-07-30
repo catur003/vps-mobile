@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/Button';
 import { colors, spacing, radius, mono } from '@/lib/theme';
 import { getSshCredentials } from '@/lib/storage';
-import { connectSsh, getPtyTypeXterm, SshSession } from '@/lib/ssh';
+import { connectSsh, getPtyTypeXterm, getErrorMessage, SshSession } from '@/lib/ssh';
 
 interface LogEntry {
   id: string;
@@ -65,7 +65,7 @@ export default function SshTerminalScreen() {
         setState('connected');
       } catch (err) {
         if (!cancelled) {
-          setErrorMsg(err instanceof Error ? err.message : 'Gagal konek ke server.');
+          setErrorMsg(getErrorMessage(err));
           setState('error');
         }
       }
@@ -114,7 +114,7 @@ export default function SshTerminalScreen() {
     } catch (err) {
       setLog((prev) => [
         ...prev,
-        { id: `${Date.now()}`, command, output: err instanceof Error ? err.message : 'Gagal menjalankan command.', isError: true },
+        { id: `${Date.now()}`, command, output: getErrorMessage(err), isError: true },
       ]);
     } finally {
       setRunning(false);

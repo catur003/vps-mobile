@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -7,29 +7,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { queryClient } from '@/lib/queryClient';
-import { isConfigured } from '@/lib/storage';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { colors } from '@/lib/theme';
 import { ThemeProvider, useThemePicker } from '@/lib/ThemeContext';
 import { THEME_LIST } from '@/lib/themes';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const [checking, setChecking] = useState(true);
-  const [configured, setConfigured] = useState(false);
+  const { checking, configured } = useAuth();
   const router = useRouter();
   const segments = useSegments();
-
-  useEffect(() => {
-    // Bug fix: sebelumnya gak ada .catch() - kalau isConfigured() reject
-    // (mis. SecureStore error di device/emulator tertentu), promise-nya
-    // ketolak diam-diam, .then() gak pernah kepanggil, dan `checking` NYANGKUT
-    // di `true` SELAMANYA - app keliatan "loading doang" pas dibuka, gak
-    // pernah lanjut ke halaman manapun. Sekarang kalau gagal, dianggap belum
-    // configured (paling aman - lempar ke halaman Settings) daripada nge-hang.
-    isConfigured()
-      .then((ok) => setConfigured(ok))
-      .catch(() => setConfigured(false))
-      .finally(() => setChecking(false));
-  }, []);
 
   useEffect(() => {
     if (checking) return;
@@ -119,15 +105,17 @@ export default function RootLayout() {
     <ThemeProvider>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthGate>
-            <ThemedRoot>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="settings" options={{ headerShown: true, title: 'Pengaturan Koneksi', presentation: 'modal' }} />
-                <Stack.Screen name="cleanup" options={{ headerShown: true, title: 'Bersihkan Cache Project', presentation: 'modal' }} />
-              </Stack>
-            </ThemedRoot>
-          </AuthGate>
+          <AuthProvider>
+            <AuthGate>
+              <ThemedRoot>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="settings" options={{ headerShown: true, title: 'Pengaturan Koneksi', presentation: 'modal' }} />
+                  <Stack.Screen name="cleanup" options={{ headerShown: true, title: 'Bersihkan Cache Project', presentation: 'modal' }} />
+                </Stack>
+              </ThemedRoot>
+            </AuthGate>
+          </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </ThemeProvider>

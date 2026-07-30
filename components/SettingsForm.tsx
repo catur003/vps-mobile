@@ -11,6 +11,7 @@ import { AuroraBackground } from './AuroraBackground';
 import { colors, radius, spacing } from '@/lib/theme';
 import { useTabTopPadding } from '@/lib/useTopInset';
 import { getApiKey, getBaseUrl, setApiKey, setBaseUrl, clearCredentials } from '@/lib/storage';
+import { useAuth } from '@/lib/AuthContext';
 import { healthCheck } from '@/lib/api';
 
 interface ModalState {
@@ -37,6 +38,7 @@ interface SettingsFormProps {
 export function SettingsForm({ variant = 'modal' }: SettingsFormProps) {
   const router = useRouter();
   const topPadding = useTabTopPadding(spacing.lg);
+  const { refresh } = useAuth();
 
   const [baseUrl, setBaseUrlInput] = useState('');
   const [apiKey, setApiKeyInput] = useState('');
@@ -82,10 +84,29 @@ export function SettingsForm({ variant = 'modal' }: SettingsFormProps) {
       return;
     }
     setSaving(true);
-    await setBaseUrl(baseUrl.trim());
-    await setApiKey(apiKey.trim());
-    setSaving(false);
-    router.replace('/(tabs)');
+    try {
+      await setBaseUrl(baseUrl.trim());
+      await setApiKey(apiKey.trim());
+      // Refresh dulu SEBELUM navigasi, biar pas segments berubah ke
+      // "(tabs)", AuthGate udah lihat configured=true - bukan nilai lama.
+      await refresh();
+      router.replace('/(tabs)');
+    } catch (err) {
+      // Bug fix: sebelumnya gak ada try/catch di sini - kalau SecureStore
+      // gagal nulis (mis. Keystore error di release build), error-nya
+      // ketelan diam-diam: tombol nyangkut loading, data gak ke-save,
+      // isConfigured() tetap false selamanya, dan AuthGate di _layout.tsx
+      // terus nge-bounce user balik ke Settings tiap ganti tab (keliatan
+      // kayak "tab lain gabisa dipencet"). Sekarang errornya ditampilin
+      // biar user tahu ada yang gagal, bukan nyangkut diam-diam.
+      showInfo(
+        'error',
+        'Gagal Menyimpan',
+        `Kredensial gagal disimpan ke perangkat ini: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleReset() {
@@ -101,6 +122,7 @@ export function SettingsForm({ variant = 'modal' }: SettingsFormProps) {
           variant: 'danger',
           onPress: async () => {
             await clearCredentials();
+            await refresh();
             setBaseUrlInput('');
             setApiKeyInput('');
             closeModal();

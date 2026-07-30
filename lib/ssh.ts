@@ -102,6 +102,40 @@ export function getPtyTypeXterm(): unknown {
   return PtyType?.XTERM ?? 'xterm';
 }
 
+/**
+ * Ekstrak pesan error yang bisa dibaca manusia dari APAPUN bentuknya.
+ *
+ * Bug fix: rejection dari native module (lewat bridge React Native) SERING
+ * BUKAN instance `Error` JS biasa - biasanya berbentuk object polos kayak
+ * `{ code: 'E_SSH_AUTH_FAIL', message: '...', userInfo: {...} }`, atau
+ * kadang cuma string mentah. Kode UI sebelumnya (`err instanceof Error ?
+ * err.message : 'pesan generik'`) nge-skip semua kasus itu dan nampilin
+ * "Terjadi kesalahan tidak diketahui" - pesan ASLI dari native SSH library
+ * (yang justru paling penting buat diagnosis kenapa gagal) ketelan. Sekarang
+ * dicoba beberapa bentuk umum sebelum nyerah ke JSON.stringify mentah, biar
+ * apapun bentuknya, ada info yang kebaca di layar.
+ */
+export function getErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object') {
+    const anyErr = err as Record<string, unknown>;
+    if (typeof anyErr.message === 'string' && anyErr.message) return anyErr.message;
+    if (typeof anyErr.userInfo === 'object' && anyErr.userInfo) {
+      const info = anyErr.userInfo as Record<string, unknown>;
+      if (typeof info.message === 'string' && info.message) return info.message;
+    }
+    if (typeof anyErr.code === 'string' && anyErr.code) return `Kode error native: ${anyErr.code}`;
+    try {
+      const json = JSON.stringify(err);
+      if (json && json !== '{}') return json;
+    } catch {
+      // circular / gak bisa di-serialize, lanjut ke fallback di bawah
+    }
+  }
+  return 'Terjadi kesalahan tidak diketahui (bentuk error dari native module gak dikenali).';
+}
+
 /** Cek ringan tanpa nge-throw - buat nampilin banner "belum ke-install" di UI kalau perlu. */
 export function isSshModuleAvailable(): boolean {
   try {

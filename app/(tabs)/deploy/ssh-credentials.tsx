@@ -9,7 +9,7 @@ import { AppModal, AppModalButton, AppModalKind } from '@/components/AppModal';
 import { KeyboardScreen } from '@/components/KeyboardScreen';
 import { colors, spacing } from '@/lib/theme';
 import { getSshCredentials, setSshCredentials, clearSshCredentials, SshAuthMethod } from '@/lib/storage';
-import { connectSsh } from '@/lib/ssh';
+import { connectSsh, getErrorMessage } from '@/lib/ssh';
 
 interface ModalState {
   visible: boolean;
@@ -92,7 +92,7 @@ export default function SshCredentialsScreen() {
         visible: true,
         kind: 'error',
         title: 'Gagal Konek',
-        message: err instanceof Error ? err.message : 'Terjadi kesalahan tidak diketahui.',
+        message: getErrorMessage(err),
       });
     } finally {
       setTesting(false);
