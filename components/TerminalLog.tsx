@@ -22,14 +22,14 @@ export function TerminalLog({ steps, liveMessage }: { steps: JobStep[]; liveMess
           <Text style={[styles.line, styles.muted]}>$ menunggu step pertama...</Text>
         )}
         {steps.map((step, i) => (
-          <View key={`${step.key}-${i}`} style={styles.lineBlock}>
+          <View key={`${step.step}-${i}`} style={styles.lineBlock}>
             <Text
               style={[
                 styles.line,
-                step.status === 'ok' ? styles.ok : step.status === 'failed' ? styles.err : styles.muted,
+                step.ok ? styles.ok : styles.err,
               ]}
             >
-              {step.status === 'ok' ? '✓' : step.status === 'failed' ? '✗' : '·'} [{step.key}] {step.label}
+              {step.ok ? '✓' : '✗'} {step.step}
             </Text>
             {step.message ? <Text style={[styles.line, styles.muted, styles.indent]}>{step.message}</Text> : null}
           </View>

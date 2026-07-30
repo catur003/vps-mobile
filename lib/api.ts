@@ -505,10 +505,18 @@ export async function issueSSL(domain: string): Promise<{ jobId: string }> {
 
 export type JobStatus = 'pending' | 'running' | 'success' | 'failed' | 'interrupted';
 
+// FIX: bentuk asli tiap step yang disimpan backend (lihat jobStore.js
+// appendJobStep(), dipanggil SEMUA worker - deploy/retry/build/seed/ssl)
+// itu { step, ok, message, at } - field `step` isinya LABEL manusia (mis.
+// "PM2 Start"), bukan machine-key, dan gak ada field terpisah buat itu.
+// Sebelumnya interface ini nyari { key, label, status } yang gak pernah
+// ada di response manapun - efeknya SETIAP baris log job (semua jenis job,
+// dari awal) selalu nunjukin "undefined - undefined" (buildLogText di
+// index.tsx) dan ikon status selalu titik abu-abu, gak pernah ✓/✗
+// (TerminalLog.tsx) - karena step.key/label/status semua selalu undefined.
 export interface JobStep {
-  key: string;
-  label: string;
-  status: 'ok' | 'failed' | string;
+  step: string;
+  ok: boolean;
   message?: string;
   at: string;
 }

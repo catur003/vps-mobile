@@ -27,8 +27,8 @@ function buildLogText(job: Job): string {
     job.message ? `Pesan: ${job.message}` : null,
     '',
     ...job.steps.map((s) => {
-      const mark = s.status === 'ok' ? '[OK]' : s.status === 'failed' ? '[GAGAL]' : '[..]';
-      const base = `${mark} ${s.key} - ${s.label}`;
+      const mark = s.ok ? '[OK]' : '[GAGAL]';
+      const base = `${mark} ${s.step}`;
       return s.message ? `${base}\n      ${s.message}` : base;
     }),
   ].filter(Boolean);
