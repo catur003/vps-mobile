@@ -9,7 +9,18 @@ import { KeyboardScreen } from '@/components/KeyboardScreen';
 import { colors, spacing } from '@/lib/theme';
 import { getJob, getProjectEnv, retryDeploy, ApiError, DeployPayload } from '@/lib/api';
 
-const PRISMA_MODES: NonNullable<DeployPayload['prismaMode']>[] = ['none', 'generate', 'push', 'migrate'];
+const PRISMA_MODES: NonNullable<DeployPayload['prismaMode']>[] = ['none', 'generate', 'push', 'push_force', 'migrate'];
+// 'push_force' = db push --accept-data-loss. Dipakai kalau step "push" biasa
+// berhenti gara-gara prisma minta konfirmasi data loss (kolom/tabel yang
+// berpotensi kehilangan data karena perubahan schema). 'migrate' TIDAK
+// pernah butuh varian force - prisma migrate deploy gak punya flag itu.
+const PRISMA_MODE_LABELS: Record<NonNullable<DeployPayload['prismaMode']>, string> = {
+  none: 'none',
+  generate: 'generate',
+  push: 'push',
+  push_force: 'push (force)',
+  migrate: 'migrate',
+};
 
 export default function RetryDeployScreen() {
   const { jobId } = useLocalSearchParams<{ jobId: string }>();
@@ -108,7 +119,7 @@ export default function RetryDeployScreen() {
           {PRISMA_MODES.map((mode) => (
             <Button
               key={mode}
-              label={mode}
+              label={PRISMA_MODE_LABELS[mode]}
               variant={prismaMode === mode ? 'primary' : 'secondary'}
               onPress={() => setPrismaMode(mode)}
             />

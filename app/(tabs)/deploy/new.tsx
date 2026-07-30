@@ -9,7 +9,14 @@ import { KeyboardScreen } from '@/components/KeyboardScreen';
 import { colors, spacing } from '@/lib/theme';
 import { deployProject, listGithubAccounts, ApiError, DeployPayload } from '@/lib/api';
 
-const PRISMA_MODES: DeployPayload['prismaMode'][] = ['none', 'generate', 'push', 'migrate'];
+const PRISMA_MODES: DeployPayload['prismaMode'][] = ['none', 'generate', 'push', 'push_force', 'migrate'];
+const PRISMA_MODE_LABELS: Record<string, string> = {
+  none: 'none',
+  generate: 'generate',
+  push: 'push',
+  push_force: 'push (force)',
+  migrate: 'migrate',
+};
 
 export default function NewDeployScreen() {
   const router = useRouter();
@@ -95,7 +102,7 @@ export default function NewDeployScreen() {
           {PRISMA_MODES.map((mode) => (
             <Button
               key={mode}
-              label={mode!}
+              label={PRISMA_MODE_LABELS[mode!]}
               variant={prismaMode === mode ? 'primary' : 'secondary'}
               onPress={() => setPrismaMode(mode)}
             />

@@ -469,7 +469,7 @@ export interface DeployPayload {
   branch?: string;
   deployUser?: string;
   envContent?: string;
-  prismaMode?: 'none' | 'generate' | 'push' | 'migrate';
+  prismaMode?: 'none' | 'generate' | 'push' | 'push_force' | 'migrate';
   // Label akun GitHub tersimpan (dari listGithubAccounts()) - kirim ini kalau
   // repo-nya PRIVATE, biar backend nyisipin username:token ke cloneUrl.
   // Tanpa ini, clone repo private selalu gagal ("could not read Username").
@@ -486,7 +486,7 @@ export interface RetryOverrides {
   port?: number;
   domain?: string;
   branch?: string;
-  prismaMode?: 'none' | 'generate' | 'push' | 'migrate';
+  prismaMode?: 'none' | 'generate' | 'push' | 'push_force' | 'migrate';
 }
 
 export async function retryDeploy(jobId: string, overrides?: RetryOverrides): Promise<{ jobId: string }> {
