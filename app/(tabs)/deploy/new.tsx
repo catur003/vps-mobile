@@ -7,7 +7,7 @@ import { FormField } from '@/components/FormField';
 import { Button } from '@/components/Button';
 import { KeyboardScreen } from '@/components/KeyboardScreen';
 import { colors, spacing } from '@/lib/theme';
-import { deployProject, listGithubAccounts, ApiError, DeployPayload } from '@/lib/api';
+import { deployProject, listGithubAccounts, listOpenPorts, ApiError, DeployPayload } from '@/lib/api';
 
 const PRISMA_MODES: DeployPayload['prismaMode'][] = ['none', 'generate', 'push', 'push_force', 'migrate'];
 const PRISMA_MODE_LABELS: Record<string, string> = {
@@ -40,6 +40,17 @@ export default function NewDeployScreen() {
   const autoGithubAccountLabel =
     githubAccounts.data?.accounts.length === 1 ? githubAccounts.data.accounts[0].label : undefined;
 
+  // Scan port yang lagi kepake di server (ss -tlnp real, bukan cuma dari
+  // registry) - dipakai buat kasih tau user port mana yang gak bisa dipakai
+  // SEBELUM submit, bukan nunggu gagal di tengah proses deploy.
+  const openPorts = useQuery({ queryKey: ['open-ports'], queryFn: listOpenPorts });
+  const usedPortSet = new Set((openPorts.data?.ports ?? []).map((p) => Number(p.port)));
+  const usedPortsSorted = Array.from(usedPortSet).sort((a, b) => a - b);
+  const portNumForCheck = Number(port);
+  const portIsUsed = port.trim() !== '' && Number.isFinite(portNumForCheck) && usedPortSet.has(portNumForCheck);
+  const portOutOfRange =
+    port.trim() !== '' && (!Number.isFinite(portNumForCheck) || portNumForCheck < 1 || portNumForCheck > 65535);
+
   const mutation = useMutation({
     mutationFn: (payload: DeployPayload) => deployProject(payload),
     onSuccess: (result) => {
@@ -52,6 +63,14 @@ export default function NewDeployScreen() {
     const portNum = Number(port);
     if (!name.trim() || !gitRepo.trim() || !domain.trim() || !folderPath.trim() || !portNum) {
       Alert.alert('Belum lengkap', 'Nama, Git repo, domain, port, dan folder path wajib diisi.');
+      return;
+    }
+    if (portNum < 1 || portNum > 65535 || !Number.isInteger(portNum)) {
+      Alert.alert('Port tidak valid', 'Port harus angka bulat antara 1-65535.');
+      return;
+    }
+    if (usedPortSet.has(portNum)) {
+      Alert.alert('Port sudah dipakai', `Port ${portNum} lagi dipakai proses lain di server. Pilih port lain.`);
       return;
     }
     mutation.mutate({
@@ -81,7 +100,25 @@ export default function NewDeployScreen() {
         />
         <FormField label="Branch (opsional)" placeholder="main" value={branch} onChangeText={setBranch} />
         <FormField label="Domain" placeholder="app.contoh.com" keyboardType="url" value={domain} onChangeText={setDomain} />
-        <FormField label="Port" placeholder="3001" keyboardType="number-pad" value={port} onChangeText={setPort} />
+        <FormField
+          label="Port"
+          placeholder="3001"
+          keyboardType="number-pad"
+          value={port}
+          onChangeText={setPort}
+          error={portIsUsed || portOutOfRange}
+          hint={
+            portIsUsed
+              ? `⚠ Port ${portNumForCheck} sudah dipakai proses lain, pilih port lain.`
+              : portOutOfRange
+              ? 'Port harus angka 1-65535.'
+              : openPorts.isLoading
+              ? 'Memindai port yang lagi dipakai...'
+              : usedPortsSorted.length > 0
+              ? `Port terpakai: ${usedPortsSorted.join(', ')}`
+              : undefined
+          }
+        />
         <FormField
           label="Folder Path (absolute)"
           placeholder="/var/www/zenstock"
@@ -122,7 +159,12 @@ export default function NewDeployScreen() {
         />
       </Card>
 
-      <Button label="Mulai Deploy" loading={mutation.isPending} onPress={handleSubmit} />
+      <Button
+        label="Mulai Deploy"
+        loading={mutation.isPending}
+        disabled={portIsUsed || portOutOfRange}
+        onPress={handleSubmit}
+      />
     </KeyboardScreen>
   );
 }

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,13 +67,18 @@ export default function DomainsScreen() {
           </Text>
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <Card style={styles.loadingCard}>
+              <ActivityIndicator color={colors.accent} />
+              <Text style={styles.emptyText}>Memuat daftar domain...</Text>
+            </Card>
+          ) : (
             <Card>
               <Text style={styles.emptyText}>
                 {isError ? `Gagal ambil daftar domain: ${(error as Error)?.message}` : 'Belum ada domain terdaftar.'}
               </Text>
             </Card>
-          ) : null
+          )
         }
         renderItem={({ item }) => (
           <Card onPress={() => router.push(`/(tabs)/deploy/domains/${encodeURIComponent(item.domain)}`)}>
@@ -96,6 +101,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: 40 },
   intro: { fontSize: 13, color: colors.inkMuted, lineHeight: 19, marginBottom: spacing.md },
   emptyText: { fontSize: 13, color: colors.inkMuted },
+  loadingCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   domain: { fontSize: 14.5, fontWeight: '700', color: colors.ink, marginBottom: 6 },
   badgeRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
