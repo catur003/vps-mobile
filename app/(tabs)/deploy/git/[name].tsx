@@ -15,6 +15,7 @@ import {
   gitPull,
   gitCheckout,
   gitStash,
+  gitForceSync,
   listGithubAccounts,
   updateGitCredentials,
   runProjectBuild,
@@ -63,13 +64,53 @@ export default function GitDetailScreen() {
     qc.invalidateQueries({ queryKey: ['git-log', name] });
   }
 
+  const forceSyncMutation = useMutation({
+    mutationFn: () => gitForceSync(name),
+    onSuccess: () => {
+      invalidateAll();
+      Alert.alert('Berhasil disamakan', 'Working tree sudah dipaksa sama persis dengan branch remote.');
+    },
+    onError: (err) => Alert.alert('Gagal', err instanceof ApiError ? err.message : 'Terjadi kesalahan.'),
+  });
+
+  function confirmForceSync() {
+    Alert.alert(
+      'Paksa Sync ke Remote?',
+      'Ini akan MEMBUANG semua perubahan lokal (termasuk file yang lagi conflict) dan menyamakan paksa ke branch remote. Tidak bisa dibatalkan.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        { text: 'Paksa Sync', style: 'destructive', onPress: () => forceSyncMutation.mutate() },
+      ]
+    );
+  }
+
   const pullMutation = useMutation({
     mutationFn: () => gitPull(name),
     onSuccess: () => {
       invalidateAll();
       Alert.alert('Pull selesai', 'Repo sudah di-update ke commit terbaru dari remote.');
     },
-    onError: (err) => Alert.alert('Gagal Pull', err instanceof ApiError ? err.message : 'Terjadi kesalahan.'),
+    onError: (err) => {
+      const message = err instanceof ApiError ? err.message : 'Terjadi kesalahan.';
+      // FIX: sebelumnya cuma nampilin error mentah dari `git pull` (mis.
+      // "Pulling is not possible because you have unmerged files") tanpa
+      // jalan keluar apapun - Stash JUGA nolak dalam kondisi ini (git
+      // secara default nolak stash kalau ada unmerged files), jadi user
+      // kejebak: 2 tombol yang ada (Pull, Stash) dua-duanya gak bisa
+      // dipakai. Sekarang kondisi ini dideteksi dan ditawarin jalan keluar
+      // (force-sync) langsung di dialog errornya.
+      const isUnmergedConflict = /unmerged files|unresolved conflict/i.test(message);
+      Alert.alert(
+        'Gagal Pull',
+        message,
+        isUnmergedConflict
+          ? [
+              { text: 'Tutup', style: 'cancel' },
+              { text: 'Paksa Sync ke Remote', style: 'destructive', onPress: confirmForceSync },
+            ]
+          : undefined
+      );
+    },
   });
 
   const stashMutation = useMutation({
@@ -200,6 +241,16 @@ export default function GitDetailScreen() {
           <Button label="Stash" variant="secondary" loading={stashMutation.isPending} onPress={() => stashMutation.mutate()} />
         </View>
       </View>
+      {/* FIX: sebelumnya opsi ini cuma nongol di dalam dialog error "Gagal
+          Pull" - kalau dialognya kadung ditutup (mis. keluar app dulu, balik
+          lagi nanti), user gak ada cara masuk ke sini lagi selain nge-trigger
+          Pull ulang buat mancing error yang sama. Sekarang selalu ada di
+          bawah, kecil & gak mencolok (memang cuma dibutuhkan pas kejebak). */}
+      <Pressable onPress={confirmForceSync} disabled={forceSyncMutation.isPending} style={styles.forceSyncLink}>
+        <Text style={styles.forceSyncLinkText}>
+          {forceSyncMutation.isPending ? 'Nge-sync...' : 'Pull/Stash gak bisa? Paksa Sync ke Remote'}
+        </Text>
+      </Pressable>
 
       <Text style={styles.sectionTitle}>Branch</Text>
       <Card>
@@ -393,6 +444,8 @@ const styles = StyleSheet.create({
   subtext: { fontSize: 12, color: colors.inkMuted, marginTop: 4, lineHeight: 17 },
   fileLine: { fontFamily: mono.fontFamily, fontSize: 11, color: colors.inkMuted, marginTop: 2 },
   actionsRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, marginBottom: spacing.sm },
+  forceSyncLink: { alignItems: 'center', paddingVertical: 6, marginBottom: spacing.md },
+  forceSyncLinkText: { fontSize: 11.5, color: colors.inkFaint, textDecorationLine: 'underline' },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',

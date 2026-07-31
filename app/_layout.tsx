@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, AppState, AppStateStatus, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,34 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { colors } from '@/lib/theme';
 import { ThemeProvider, useThemePicker } from '@/lib/ThemeContext';
 import { THEME_LIST } from '@/lib/themes';
+
+/**
+ * FIX (dashboard "gak realtime"): TanStack Query punya `refetchOnWindowFocus`
+ * (default ON) yang di web otomatis refetch pas tab balik aktif - tapi itu
+ * jalan lewat event DOM `visibilitychange`, yang SAMA SEKALI GAK ADA di React
+ * Native. Tanpa wiring manual ini, `focusManager` gak pernah tau app baru
+ * balik ke foreground (mis. abis switch app / kunci-buka layar / balik dari
+ * notifikasi), jadi data yang ketampil (termasuk bar CPU/RAM/Disk di
+ * Dashboard) BEKU di nilai lama sampai `refetchInterval` kebetulan tick lagi
+ * (bisa sampai ~15 detik lagi) atau user pull-to-refresh manual - persis
+ * gejala yang dilaporkan. `AppState` dari react-native itu counterpart-nya
+ * `visibilitychange` di web - begitu disambungkan ke `focusManager`, semua
+ * query di app ini (bukan cuma dashboard) otomatis refetch begitu app balik
+ * aktif, TANPA perlu refresh manual. Ini pola resmi yang didokumentasikan
+ * TanStack Query buat React Native.
+ */
+function onAppStateChange(status: AppStateStatus) {
+  if (Platform.OS !== 'web') {
+    focusManager.setFocused(status === 'active');
+  }
+}
+
+function useRefetchOnAppFocus() {
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', onAppStateChange);
+    return () => subscription.remove();
+  }, []);
+}
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { checking, configured } = useAuth();
@@ -84,6 +112,7 @@ export default function RootLayout() {
   // `fontError`, app tetap jalan (icon Ionicons mungkin gak muncul, tapi itu
   // kosmetik doang - jauh lebih baik daripada seluruh app gak bisa dipakai).
   const [fontsLoaded, fontError] = useFonts({ ...Ionicons.font });
+  useRefetchOnAppFocus();
 
   if (!fontsLoaded && !fontError) {
     return (

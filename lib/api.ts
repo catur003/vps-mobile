@@ -474,6 +474,13 @@ export async function gitStash(name: string): Promise<{ output: string }> {
   return unwrap(c.post(`/git/${encodeURIComponent(name)}/stash`));
 }
 
+// Jalan keluar buat kondisi yang gak bisa diselesaikan gitPull()/gitStash()
+// biasa (unmerged files/conflict) - DESTRUKTIF, buang semua perubahan lokal.
+export async function gitForceSync(name: string): Promise<{ output: string }> {
+  const c = await client();
+  return unwrap(c.post(`/git/${encodeURIComponent(name)}/force-sync`, { confirm: true }));
+}
+
 export async function getPm2Logs(name: string, lines = 200): Promise<{ name: string; owner: string; lines: number; output: string }> {
   const c = await client();
   return unwrap(c.get(`/pm2/${encodeURIComponent(name)}/logs`, { params: { lines } }));
