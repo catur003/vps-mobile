@@ -19,11 +19,28 @@ export default function NewNginxSiteScreen() {
     mutationFn: () => createNginxSite(domain.trim(), parseInt(port, 10)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['nginx-sites'] });
+      qc.invalidateQueries({ queryKey: ['domains'] });
       Alert.alert('Site dibuat', `Domain "${domain.trim()}" berhasil di-setup dan nginx sudah di-reload.`, [
         { text: 'OK', onPress: () => router.back() },
       ]);
     },
-    onError: (err) => Alert.alert('Gagal', err instanceof ApiError ? err.message : 'Terjadi kesalahan.'),
+    onError: (err) => {
+      const message = err instanceof ApiError ? err.message : 'Terjadi kesalahan.';
+      const isDomainConflict = err instanceof ApiError && /sudah dipakai project/i.test(message);
+      Alert.alert(
+        'Gagal',
+        message,
+        isDomainConflict
+          ? [
+              { text: 'Tutup', style: 'cancel' },
+              {
+                text: 'Lihat Detail Domain',
+                onPress: () => router.push(`/(tabs)/deploy/domains/${encodeURIComponent(domain.trim())}`),
+              },
+            ]
+          : undefined
+      );
+    },
   });
 
   function handleSubmit() {

@@ -44,11 +44,20 @@ export default function JobsScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} />}
         ListHeaderComponent={
           <>
+            <Card onPress={() => router.push('/(tabs)/deploy/domains')} style={styles.domainLink}>
+              <View style={styles.row}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.type}>DOMAIN</Text>
+                  <Text style={styles.name}>Status Nginx, SSL & Project</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
+              </View>
+            </Card>
             <Card onPress={() => router.push('/(tabs)/deploy/nginx')} style={styles.nginxLink}>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.type}>NGINX</Text>
-                  <Text style={styles.name}>Kelola Site & Domain</Text>
+                  <Text style={styles.name}>Kelola Site Nginx</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
               </View>
@@ -88,8 +97,14 @@ export default function JobsScreen() {
         )}
       />
       <View style={styles.fabRow}>
-        <Pressable style={[styles.fab, styles.fabSecondary]} onPress={() => router.push('/(tabs)/deploy/ssl')}>
-          <Ionicons name="lock-closed-outline" size={20} color={colors.accent} />
+        <Pressable
+          style={({ pressed }) => [styles.fabLabeled, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => router.push('/(tabs)/deploy/ssl')}
+          accessibilityRole="button"
+          accessibilityLabel="Kelola SSL - terbitkan atau perbarui sertifikat SSL untuk domain"
+        >
+          <Ionicons name="lock-closed-outline" size={17} color={colors.accent} />
+          <Text style={styles.fabLabelText}>SSL</Text>
         </Pressable>
         <Fab onPress={() => router.push('/(tabs)/deploy/new')} size={54}>
           <Ionicons name="add" size={26} color={colors.onAccent} />
@@ -110,6 +125,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 14.5, fontWeight: '700', color: colors.ink, marginTop: 2 },
   time: { fontSize: 11, color: colors.inkFaint, marginTop: 3 },
   fabRow: { position: 'absolute', right: spacing.lg, bottom: spacing.lg, gap: spacing.sm, alignItems: 'center' },
+  domainLink: { borderColor: colors.accentPinkSoft, backgroundColor: colors.accentPinkSoft },
   nginxLink: { borderColor: colors.accentSoft, backgroundColor: colors.accentSoft },
   backupLink: { borderColor: colors.blueSoft, backgroundColor: colors.blueSoft },
   fab: {
@@ -125,5 +141,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  fabSecondary: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.divider, width: 46, height: 46 },
+  // FIX (UX): sebelumnya ikon gembok polos 46x46 tanpa teks apapun - user
+  // baru gak ada cara tau itu tombol apa sebelum nge-tap. Diganti jadi pill
+  // icon+label biar langsung kebaca dari luar, gak perlu nunggu di-tap dulu.
+  fabLabeled: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+  fabLabelText: { fontSize: 12.5, fontWeight: '700', color: colors.accent },
 });

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { colors, spacing, radius, mono } from '@/lib/theme';
-import { viewNginxSite, deleteNginxSite, testNginxConfig, ApiError } from '@/lib/api';
+import { viewNginxSite, deleteNginxSite, testNginxConfig, getDomainStatus, ApiError } from '@/lib/api';
 
 export default function NginxSiteDetailScreen() {
   const { file } = useLocalSearchParams<{ file: string }>();
@@ -13,6 +13,7 @@ export default function NginxSiteDetailScreen() {
   const qc = useQueryClient();
   const [testResult, setTestResult] = useState<{ valid: boolean; output: string } | null>(null);
   const [testing, setTesting] = useState(false);
+  const [checkingBeforeDelete, setCheckingBeforeDelete] = useState(false);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['nginx-site', file],
@@ -24,15 +25,36 @@ export default function NginxSiteDetailScreen() {
     mutationFn: () => deleteNginxSite(file),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['nginx-sites'] });
+      qc.invalidateQueries({ queryKey: ['domains'] });
       Alert.alert('Terhapus', `Site "${data?.domain ?? file}" berhasil dihapus.`, [{ text: 'OK', onPress: () => router.back() }]);
     },
     onError: (err) => Alert.alert('Gagal', err instanceof ApiError ? err.message : 'Terjadi kesalahan.'),
   });
 
-  function confirmDelete() {
+  async function confirmDelete() {
+    const domain = data?.domain ?? String(file);
+    setCheckingBeforeDelete(true);
+    let extraWarning = '';
+    try {
+      const status = await getDomainStatus(domain);
+      if (status.project) {
+        extraWarning = status.project.alive
+          ? `\n\n⚠️ Domain ini masih terdaftar ke project "${status.project.name}" yang masih aktif. Menghapus site ini TIDAK menghapus project atau catatan domainnya - bikin site baru dengan domain yang sama akan tetap ditolak selama project ini masih ada.`
+          : `\n\nDomain ini pernah terdaftar ke project "${status.project.name}", tapi project itu sudah tidak aktif.`;
+      }
+      if (status.ssl.exists) {
+        extraWarning += '\n\nSertifikat SSL domain ini TIDAK ikut terhapus (tetap ada, terpisah dari site nginx).';
+      }
+    } catch {
+      // Gagal ambil status tambahan bukan alasan buat blokir hapus - lanjut
+      // tampilin dialog standar tanpa info ekstra.
+    } finally {
+      setCheckingBeforeDelete(false);
+    }
+
     Alert.alert(
-      `Hapus "${data?.domain ?? file}"?`,
-      'Domain ini akan langsung unreachable begitu site dihapus. Tindakan ini tidak bisa dibatalkan.',
+      `Hapus "${domain}"?`,
+      `Domain ini akan langsung unreachable begitu site dihapus. Tindakan ini tidak bisa dibatalkan.${extraWarning}`,
       [
         { text: 'Batal', style: 'cancel' },
         { text: 'Hapus Permanen', style: 'destructive', onPress: () => deleteMutation.mutate() },
@@ -89,7 +111,7 @@ export default function NginxSiteDetailScreen() {
                 </Text>
               </Card>
             )}
-            <Button label="Hapus Site" variant="danger" loading={deleteMutation.isPending} onPress={confirmDelete} />
+            <Button label="Hapus Site" variant="danger" loading={deleteMutation.isPending || checkingBeforeDelete} onPress={confirmDelete} />
           </View>
         </>
       )}

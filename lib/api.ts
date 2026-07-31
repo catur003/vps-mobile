@@ -365,6 +365,27 @@ export async function scanFull(): Promise<ScanFullResult> {
   return unwrap(c.get('/scanner/full'));
 }
 
+// ===================== Domain (status gabungan) =====================
+// Satu response gabungin 3 sumber yang sebelumnya cuma bisa dicek terpisah
+// lewat 3 menu (Site Nginx / SSL / Project) - lihat GET /domains di backend.
+
+export interface DomainStatus {
+  domain: string;
+  nginx: { exists: boolean; file?: string; target?: string };
+  project: { name: string; alive: boolean; port: number } | null;
+  ssl: { exists: boolean; daysLeft: number | null; expiringSoon: boolean };
+}
+
+export async function listDomains(): Promise<DomainStatus[]> {
+  const c = await client();
+  return unwrap(c.get('/domains'));
+}
+
+export async function getDomainStatus(domain: string): Promise<DomainStatus> {
+  const c = await client();
+  return unwrap(c.get(`/domains/${encodeURIComponent(domain)}`));
+}
+
 // ===================== Nginx (Fase C) =====================
 
 export interface NginxSite {
