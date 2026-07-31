@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FormField } from './FormField';
@@ -223,6 +223,18 @@ export function SettingsForm({ variant = 'modal' }: SettingsFormProps) {
           <Text style={styles.rowSub}>Kelola akun/token buat deploy repo private</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
+      </Card>
+
+      <Text style={styles.sectionTitle}>Tentang</Text>
+      <Card onPress={() => Linking.openURL('https://github.com/catur003')} style={styles.rowCard}>
+        <View style={[styles.rowIconWrap, { backgroundColor: colors.accentSoft }]}>
+          <Ionicons name="logo-github" size={18} color={colors.accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.rowTitle}>Dibuat oleh catur003</Text>
+          <Text style={styles.rowSub}>github.com/catur003</Text>
+        </View>
+        <Ionicons name="open-outline" size={18} color={colors.inkFaint} />
       </Card>
 
       <Text style={[styles.sectionTitle, { color: colors.red }]}>Zona Berbahaya</Text>

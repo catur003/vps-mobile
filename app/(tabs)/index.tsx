@@ -20,12 +20,12 @@ export default function DashboardScreen() {
   const monitor = useQuery({
     queryKey: ['monitor'],
     queryFn: getMonitorStatus,
-    refetchInterval: 15000,
+    refetchInterval: 10000,
   });
   const pm2Apps = useQuery({
     queryKey: ['pm2-apps'],
     queryFn: listPm2Apps,
-    refetchInterval: 15000,
+    refetchInterval: 10000,
   });
 
   const { data, isLoading, isError, error, refetch, isRefetching } = monitor;

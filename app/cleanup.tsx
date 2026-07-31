@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/Card';
@@ -175,6 +175,12 @@ export default function CleanupScreen() {
                 </Text>
               </Card>
             )}
+            {isLoading && (
+              <Card style={styles.loadingCard}>
+                <ActivityIndicator color={colors.accent} />
+                <Text style={styles.loadingText}>Memindai cache project...</Text>
+              </Card>
+            )}
           </>
         }
         ListEmptyComponent={
@@ -232,6 +238,8 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 11.5, color: colors.inkMuted },
   totalValue: { fontSize: 20, fontWeight: '800', color: colors.ink, marginTop: 2 },
   emptyText: { fontSize: 13, color: colors.inkMuted },
+  loadingCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  loadingText: { fontSize: 13, color: colors.inkMuted },
   group: { marginBottom: spacing.md },
   groupTitle: {
     fontSize: 12,
