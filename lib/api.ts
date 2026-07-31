@@ -799,15 +799,20 @@ export interface ProjectBuildSteps {
  * job-based sama seperti deployProject(), progress dipoll lewat GET /jobs/:id
  * (pakai getJob()). Job type-nya "project_build".
  */
+// FIX (404 "Endpoint tidak ditemukan"): backend mount build.routes.js di
+// /project (lihat server.js: `app.use('/project', buildRoutes)`), BUKAN
+// /build - path /build/... di sini sebelumnya salah dari awal, gak pernah
+// nyambung ke endpoint manapun. "Jalankan Build" DAN "Jalankan Seed"
+// dua-duanya kena (dua-duanya manggil helper ini).
 export async function runProjectBuild(name: string, steps: ProjectBuildSteps): Promise<{ jobId: string }> {
   const c = await client();
-  return unwrap(c.post(`/build/${encodeURIComponent(name)}/build`, steps));
+  return unwrap(c.post(`/project/${encodeURIComponent(name)}/build`, steps));
 }
 
 /** Jalankan `prisma db seed` manual - job-based, job type "project_seed". */
 export async function runProjectSeed(name: string): Promise<{ jobId: string }> {
   const c = await client();
-  return unwrap(c.post(`/build/${encodeURIComponent(name)}/seed`));
+  return unwrap(c.post(`/project/${encodeURIComponent(name)}/seed`));
 }
 
 // ===================== Project (Env & Delete) =====================
