@@ -57,6 +57,10 @@ export function PmAppCard({ app }: { app: Pm2App }) {
 
   const isOnline = app.status === 'online';
   const goToGit = () => pushIntoTab(router, '/(tabs)/deploy', `/(tabs)/deploy/git/${encodeURIComponent(app.name)}`);
+  // Threshold sengaja rendah (5) - restart manual sesekali normal, tapi kalau
+  // angkanya udah segini di satu app, biasanya itu crash-loop yang lolos gak
+  // ketauan karena "Ready in Xms" tetep muncul tiap kali sebelum crash lagi.
+  const restartWarn = app.restartCount >= 20 ? colors.red : app.restartCount >= 5 ? colors.amber : undefined;
 
   return (
     <Card style={styles.card}>
@@ -76,7 +80,14 @@ export function PmAppCard({ app }: { app: Pm2App }) {
       >
         <View style={{ flex: 1 }}>
           <Text style={styles.name}>{app.name}</Text>
-          <Text style={styles.meta}>PM2 · :{app.port} · CPU {app.cpu}</Text>
+          <Text style={styles.meta}>
+            PM2 · :{app.port} · CPU {app.cpu}
+            {app.restartCount > 0 ? (
+              <Text style={restartWarn ? { color: restartWarn, fontWeight: '700' } : undefined}>
+                {' · '}Restart {app.restartCount}x
+              </Text>
+            ) : null}
+          </Text>
         </View>
         <StatusPill status={app.status} />
         <Ionicons name="chevron-forward" size={16} color={colors.inkFaint} style={{ marginLeft: 2 }} />

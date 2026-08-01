@@ -185,6 +185,7 @@ export interface Pm2App {
   cpu: string;
   uptime: string;
   cwd: string;
+  restartCount: number;
 }
 
 export async function listPm2Apps(): Promise<{ apps: Pm2App[]; warnings: string[] }> {
