@@ -790,7 +790,7 @@ export async function uploadSqlFile(fileUri: string, fileName: string, mimeType?
 
 export interface ProjectBuildSteps {
   install?: boolean;
-  prismaMode?: 'none' | 'generate' | 'push' | 'migrate';
+  prismaMode?: 'none' | 'generate' | 'push' | 'push_force' | 'migrate';
   build?: boolean;
   restartPm2?: boolean;
 }

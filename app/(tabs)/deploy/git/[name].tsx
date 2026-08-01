@@ -303,16 +303,25 @@ export default function GitDetailScreen() {
         </View>
         <Text style={[styles.inputLabel, { marginTop: spacing.md }]}>Prisma</Text>
         <View style={styles.modeRow}>
-          {(['none', 'generate', 'push', 'migrate'] as const).map((mode) => (
+          {(['none', 'generate', 'push', 'push_force', 'migrate'] as const).map((mode) => (
             <Pressable
               key={mode}
               onPress={() => setPrismaMode(mode)}
-              style={[styles.modeChip, prismaMode === mode && styles.modeChipActive]}
+              style={[styles.modeChip, prismaMode === mode && styles.modeChipActive, mode === 'push_force' && prismaMode === mode && styles.modeChipDanger]}
             >
-              <Text style={[styles.modeChipText, prismaMode === mode && styles.modeChipTextActive]}>{mode}</Text>
+              <Text style={[styles.modeChipText, prismaMode === mode && styles.modeChipTextActive]}>
+                {mode === 'push_force' ? 'push (force)' : mode}
+              </Text>
             </Pressable>
           ))}
         </View>
+        {prismaMode === 'push_force' && (
+          <Text style={styles.dangerHint}>
+            ⚠ Ini jalanin `prisma db push --accept-data-loss` — dipakai kalau "push" biasa gagal karena
+            perubahan schema berpotensi ngilangin data (mis. drop kolom/tabel). Project ini kemungkinan
+            udah ada data produksi, pastiin udah backup database dulu sebelum lanjut.
+          </Text>
+        )}
         <View style={{ marginTop: spacing.md }}>
           <Button
             label="Jalankan Build"
@@ -492,6 +501,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   modeChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  modeChipDanger: { backgroundColor: colors.red, borderColor: colors.red },
+  dangerHint: { fontSize: 12, color: colors.red, marginTop: spacing.sm, lineHeight: 17 },
   modeChipText: { fontSize: 12, fontWeight: '700', color: colors.ink },
   modeChipTextActive: { color: colors.onAccent },
 });
